@@ -1,3 +1,6 @@
+## modified from the code 
+## https://github.com/NVlabs/stylegan2-ada/blob/8c3fd8bac3e5a54a20e860fc163d6e67cc03c623/calc_metrics.py
+
 # Copyright (c) 2020, NVIDIA CORPORATION.  All rights reserved.
 #
 # NVIDIA CORPORATION and its licensors retain all intellectual property
@@ -17,6 +20,8 @@ import dnnlib.tflib as tflib
 
 from metrics import metric_defaults
 
+
+
 #----------------------------------------------------------------------------
 
 class UserError(Exception):
@@ -24,7 +29,27 @@ class UserError(Exception):
 
 #----------------------------------------------------------------------------
 
-def calc_metrics(network_pkl, metric_names, metricdata, mirror, gpus):
+def txt_config_to_json(txt_file):
+    import ast
+    
+    with open(txt_file) as f:
+        rows = f.readlines()
+        rows = [row.strip('\n') for row in rows]
+    
+    dict_new = {}
+    for row in rows:
+        key, value = row.split('=')
+        key = key.strip(' ')
+        value = value.strip(' ')
+        if '{' in value or '}' in value:
+            value = ast.literal_eval(value)
+        dict_new[key] = value
+
+    return dict_new
+
+#----------------------------------------------------------------------------
+
+def calc_metrics(network_pkl, metric_names, metricdata, mirror, gpus, is_pggan=False):
     tflib.init_tf()
 
     # Initialize metrics.
@@ -48,18 +73,37 @@ def calc_metrics(network_pkl, metric_names, metricdata, mirror, gpus):
     if os.path.isfile(network_pkl):
         potential_run_dir = os.path.dirname(network_pkl)
         potential_json_file = os.path.join(potential_run_dir, 'training_options.json')
+        potential_txt_file = os.path.join(potential_run_dir, 'config.txt')
+        
         if os.path.isfile(potential_json_file):
             print(f'Looking up training options from "{potential_json_file}"...')
             run_dir = potential_run_dir
             with open(potential_json_file, 'rt') as f:
                 training_options = json.load(f, object_pairs_hook=dnnlib.EasyDict)
+                
+        elif os.path.isfile(potential_txt_file):
+            is_pggan = True
+            print(f'Looking up training options from "{potential_txt_file}"...')
+            run_dir = potential_run_dir
+            training_options = txt_config_to_json(potential_txt_file)
+        
     if training_options is None:
         print('Could not look up training options; will rely on --metricdata and --mirror')
 
     # Choose dataset options.
     dataset_options = dnnlib.EasyDict()
     if training_options is not None:
+        if not is_pggan:
         dataset_options.update(training_options.metric_dataset_args)
+    else:
+        data_dir = training_options["data_dir"]
+        tfr_dir = training_options["dataset"]["tfrecord_dir"]
+        
+        if data_dir != run_dir:
+            data_dir = os.path.split(os.path.split(run_dir)[0])[0]
+        dataset_options.path = os.path.join(data_dir, tfr_dir)
+        ## TODO: mirror augments
+        
     dataset_options.resolution = Gs.output_shapes[0][-1]
     dataset_options.max_label_size = Gs.input_shapes[1][-1]
     if metricdata is not None:
