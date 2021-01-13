@@ -8,3 +8,10 @@ wget -P ./data https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 tar -xvzf ./data/cifar-10-python.tar.gz
 rm ./data/cifar-10-python.tar.gz
 mkdir ./dataset/cifar10u
+
+# FFHQ Dataset
+pushd ~
+git clone https://github.com/NVlabs/ffhq-dataset.git
+cd ffhq-dataset
+python download_ffhq.py --tfrecords
+popd
