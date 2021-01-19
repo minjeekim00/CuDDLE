@@ -41,12 +41,16 @@ class sample_generator():
         self._network_name  = ''
         self._dataset       = None
         self._dataset_name  = ''
+        self.feature_net    = None
 
 
     def _get_dataset_obj(self):
         if self._dataset is None:
             self._dataset = dataset.load_dataset(**self._dataset_args)
         return self._dataset
+
+    def _get_random_labels_tf(self, minibatch_size):
+        return self._get_dataset_obj().get_random_labels_tf(minibatch_size)
 
     def _create_samples(self, num_gpus=1):
         # Set minibatch
@@ -56,7 +60,7 @@ class sample_generator():
 
         # Load inception
         with dnnlib.util.open_url('https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/metrics/inception_v3_features.pkl') as f: # identical to http://download.tensorflow.org/models/image/imagenet/inception-2015-12-05.tgz
-            feature_net = pickle.load(f)
+            self.feature_net = pickle.load(f)
 
         # Load network from pickle
         with dnnlib.util.open_url(self.network_pkl) as f:
@@ -81,10 +85,21 @@ class sample_generator():
         print('Dataset options:')
         print(json.dumps(dataset_options, indent=2))
     
-        # Generate real samples with batch
+        # Generate real samples (minibatch)
         save_dir = f'./datasets_mb/{self._dataset_name}_real'
+        if not os.path.exists(save_dir):
+            self._create_reals(save_dir, max_reals=self.num_reals) #TODO: max_reals
+        
+        # Generate real sample embeddings (minibatch)
+        save_dir = f'./datasets_mb/{self._dataset_name}_real_emb_incpt'
+        if not os.path.exists(save_dir):
+            self._create_real_embeddings(save_dir, max_reals=self.num_reals)
+
+        # Generate fake samples (minibatch)
+        save_dir = f'./datasets_mb/{self._dataset_name}_fake'
         #if not os.path.exists(save_dir):
-        self._create_reals(save_dir, max_reals=self.num_reals) #TODO: max_reals
+        G_kwargs=dict(is_validation=True)
+        self._create_fakes(Gs, G_kwargs, save_dir, w_embeddings=True, max_reals=None)
 
 
 
@@ -169,8 +184,115 @@ class sample_generator():
             num_real += num
             print('\r%-20s%d' % ('Num real images:', num_real), end='', flush=True)
 
-        print(f"\n Loading took {time.time()-start}")
+        print(f"\n Creating/Loading took {time.time()-start}")
         return
+
+    def _get_real_batch(self, save_dir, num_real=None):
+        assert os.path.exists(save_dir)
+
+        if not os.path.exists(save_dir):
+            self._create_reals(save_dir, max_reals)
+
+        images_npy_path = os.path.join(save_dir, 'real_{:08d}_imgs.npy'.format(num_real))
+        labels_npy_path = os.path.join(save_dir, 'real_{:08d}_lbls.npy'.format(num_real))
+
+        images = np.load(images_npy_path)
+        labels = np.load(labels_npy_path)
+        num = len(images)
+        return images, labels, num
+
+
+    def _create_real_embeddings(self, save_dir, max_reals=None):
+        print(f'Creating directory for real images embeddings in {save_dir}.....')
+        start = time.time()
+        dataset_obj = self._get_dataset_obj()
+        minibatch_size = self.minibatch_size
+        os.makedirs(save_dir, exist_ok=True)
+
+        num_real = 0
+        while True:
+            print("num_real", num_real)
+            images, _labels, num = self._get_real_batch(save_dir[:len('_emb_incpt') * -1], num_real)
+            feat_npy_path = os.path.join(save_dir, 'real_{:08d}_feats.npy'.format(num_real))
+
+            if os.path.exists(feat_npy_path):
+                num_real += min(len(images), minibatch_size)
+                continue
+            if self.max_reals is not None:
+                num = min(num, max_reals - num_real)
+            if images.shape[1] == 1:
+                images = np.tile(images, [1, 3, 1, 1])
+            feats = self.feature_net.run(images, num_gpus=self.num_gpus, assume_frozen=True)[:num]
+
+            np.save(feat_npy_path, feats)
+
+            num_real += min(len(images), minibatch_size)
+            print('\r%-20s%d' % ('Num real embeddings:', num_real), end='', flush=True)
+
+            if max_reals is not None and num_real >= max_reals:
+                break
+
+    def _create_fakes(self, Gs, G_kwargs, save_dir, w_embeddings=True, max_reals=None):
+        os.makedirs(save_dir, exist_ok=True)
+        num_gpus = self.num_gpus
+
+        if w_embeddings:
+            save_dir_emb=save_dir+'_emb_incpt'
+            os.makedirs(save_dir_emb, exist_ok=True)
+
+        # Construct TensorFlow graph.
+        result_expr = []
+        for gpu_idx in range(num_gpus):
+            with tf.device('/gpu:%d' % gpu_idx):
+                Gs_clone = Gs.clone()
+                latents = tf.random_normal([self.minibatch_per_gpu] + Gs_clone.input_shape[1:])
+                labels = self._get_random_labels_tf(self.minibatch_per_gpu)
+                images = Gs_clone.get_output_for(latents, labels, **G_kwargs)
+                if images.shape[1] == 1: images = tf.tile(images, [1, 3, 1, 1])
+                images = tflib.convert_images_to_uint8(images)
+                if w_embeddings:
+                    feature_net_clone = self.feature_net.clone()
+                    result_expr.append(feature_net_clone.get_output_for(images))
+
+        max_fakes = self.num_fakes
+        num_fake = 0
+
+        while True:
+            images_npy_path = os.path.join(save_dir, 'fake_{:08d}_imgs.npy'.format(num_fake))
+            labels_npy_path = os.path.join(save_dir, 'fake_{:08d}_lbls.npy'.format(num_fake))
+            latents_npy_path = os.path.join(save_dir, 'fake_{:08d}_ltnts.npy'.format(num_fake))
+            feats_npy_path = os.path.join(save_dir_emb, 'fake_{:08d}_feats.npy'.format(num_fake))
+
+            if w_embeddings:
+                feat_fakes = feature_net_clone.get_output_for(images).eval()
+
+            np.save(images_npy_path, images.eval())
+            np.save(labels_npy_path, labels.eval())
+            np.save(latents_npy_path, latents.eval())
+            if w_embeddings:
+                np.save(feats_npy_path, feat_fakes)
+
+            if max_fakes is not None and num_fake >= max_fakes:
+                break
+
+            num_fake += self.minibatch_size
+            print('\r%-20s%d' % ('Num fake images:', num_fake), end='', flush=True)
+
+        
+        '''
+        # Calculate statistics for fakes.
+        start = time.time()
+        feat_fake = []
+        for begin in range(0, self.num_fakes, minibatch_size):
+            self._report_progress(begin, self.num_fakes)
+            feat_fake += list(np.concatenate(tflib.run(result_expr), axis=0))
+        feat_fake = np.stack(feat_fake[:self.num_fakes])
+        mu_fake = np.mean(feat_fake, axis=0)
+        sigma_fake = np.cov(feat_fake, rowvar=False)
+        print(f"Calculating fake statistics took {time.time()-start} secs...")
+        '''
+
+
 
 
     def _real(self, path='./cifar-10-batches-py/data_batch_1'):
