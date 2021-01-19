@@ -175,7 +175,7 @@ class sample_generator():
                 images = np.concatenate(images + [images[-1]] * (self.minibatch_size - num), axis=0)
                 labels = np.concatenate(labels + [labels[-1]] * (self.minibatch_size - num), axis=0)
                 np.save(images_npy_path, images)
-                np.save(labels_npy_path, labels)
+                #np.save(labels_npy_path, labels)
 
             if num < self.minibatch_size:
                 break
@@ -197,9 +197,10 @@ class sample_generator():
         labels_npy_path = os.path.join(save_dir, 'real_{:08d}_lbls.npy'.format(num_real))
 
         images = np.load(images_npy_path)
-        labels = np.load(labels_npy_path)
+        #labels = np.load(labels_npy_path)
         num = len(images)
-        return images, labels, num
+        #return images, labels, num
+        return images, _, num
 
 
     def _create_real_embeddings(self, save_dir, max_reals=None):
@@ -241,7 +242,6 @@ class sample_generator():
             os.makedirs(save_dir_emb, exist_ok=True)
 
         # Construct TensorFlow graph.
-        result_expr = []
         for gpu_idx in range(num_gpus):
             with tf.device('/gpu:%d' % gpu_idx):
                 Gs_clone = Gs.clone()
@@ -252,7 +252,7 @@ class sample_generator():
                 images = tflib.convert_images_to_uint8(images)
                 if w_embeddings:
                     feature_net_clone = self.feature_net.clone()
-                    result_expr.append(feature_net_clone.get_output_for(images))
+                    feat_fakes = feature_net_clone.get_output_for(images)
 
         max_fakes = self.num_fakes
         num_fake = 0
@@ -263,14 +263,13 @@ class sample_generator():
             latents_npy_path = os.path.join(save_dir, 'fake_{:08d}_ltnts.npy'.format(num_fake))
             feats_npy_path = os.path.join(save_dir_emb, 'fake_{:08d}_feats.npy'.format(num_fake))
 
-            if w_embeddings:
-                feat_fakes = feature_net_clone.get_output_for(images).eval()
+            if os.path.exists():
 
             np.save(images_npy_path, images.eval())
-            np.save(labels_npy_path, labels.eval())
+            #np.save(labels_npy_path, labels.eval())
             np.save(latents_npy_path, latents.eval())
             if w_embeddings:
-                np.save(feats_npy_path, feat_fakes)
+                np.save(feats_npy_path, feat_fakes.eval())
 
             if max_fakes is not None and num_fake >= max_fakes:
                 break
@@ -291,9 +290,6 @@ class sample_generator():
         sigma_fake = np.cov(feat_fake, rowvar=False)
         print(f"Calculating fake statistics took {time.time()-start} secs...")
         '''
-
-
-
 
     def _real(self, path='./cifar-10-batches-py/data_batch_1'):
         with open(path, 'rb') as f:
