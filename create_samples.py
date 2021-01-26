@@ -232,8 +232,12 @@ def _create_real_embeddings(image_dir, save_dir, num_gpus=1, max_reals=50000, se
 #----------------------------------------------------------------------------
 
 def _create_fakes(network_pkl, save_dir, save_emb_dir=None, 
+<<<<<<< HEAD
         minibatch_per_gpu=8, num_gpus=1, G_kwargs=dict(is_validation=True), 
         max_fakes=50000, seed=1000, isPggan=False):
+=======
+        minibatch_per_gpu=8, num_gpus=1, G_kwargs=dict(is_validation=True), max_fakes=50000, seed=1000):
+>>>>>>> 87b4980a12adbc3b0ce4a143618ea44081670f80
 
     start = time.time()
 
