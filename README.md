@@ -29,7 +29,7 @@ rf_f, rf_d = barcode_realfake.get_barcode()
 rr_f, rr_d = barcode_realreal.get_barcode()
 
 print("Mutual Fidelity   : {:.3f} | Mutual Diversity   : {:.3f}".format(rf_f, rf_d))
-print("Relative Fidelity : {:.3f} | Relative Diversity : {:.3f}".format(rf_f/rf_f, rf_d/rr_d))
+print("Relative Fidelity : {:.3f} | Relative Diversity : {:.3f}".format(rf_f/rr_f, rf_d/rr_d))
 ```
 
 If mutual fidelity is close to 1, quality of the generated images as good as the original images.
