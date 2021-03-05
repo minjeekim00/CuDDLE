@@ -17,8 +17,8 @@ These two can be considered as normalized fidelity and normalized diversity comp
 
 Take a look in
 
-  barcode_example.py
-  
+    barcode_example.py
+
 
 ```
 barcode_realfake = Barcode(real, fake)
