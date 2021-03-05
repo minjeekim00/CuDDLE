@@ -40,6 +40,6 @@ If mutual diversity is close to 1, the generative model generates images as dive
 
 This code is written in tensorflow 1.15 version. However, the **barcode.py** code is executed in numpy array format, therefore it does not depend on framework environment such as pytorch or tensorflow. All you have to do is:
 
-1. Get embedding vectors from real and generated images using pretrained CNN network, such as Inception v3.
+1. Get embedding vectors from real and generated images using pretrained CNN network, such as [Inception v3](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.pdf).
 2. Transform embedded tensors to numpy ndarray format.
 3. Calculate metrics following **barcode_example.py**
