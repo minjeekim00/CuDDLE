@@ -19,6 +19,7 @@ Take a look in
 
     barcode_example.py
 
+barcode_example.py is composed as:
 
 ```
 barcode_realfake = Barcode(real, fake)
