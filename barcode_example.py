@@ -1,7 +1,7 @@
 import numpy as np
 import sklearn.metrics
 import matplotlib.pyplot as plt
-import Barcode
+from barcode import Barcode
 
 barcode_realfake = Barcode(real, fake)
 barcode_realreal = Barcode(real, real)
