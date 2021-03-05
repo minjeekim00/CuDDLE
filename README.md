@@ -35,3 +35,11 @@ print("Relative Fidelity : {:.3f} | Relative Diversity : {:.3f}".format(rf_f/rf_
 If mutual fidelity is close to 1, the generative model generates images as good quality as the original images.
 
 If mutual diversity is close to 1, the generative model generates images as diverse as the original images.
+
+# Environment
+
+This code is written in tensorflow 1.15 version. However, the **barcode.py** code is executed in numpy array format, therefore it does not depend on framework environment such as pytorch or tensorflow. All you have to do is:
+
+1. Get embedding vectors from real and generated images using pretrained CNN network, such as Inception v3.
+2. Transform embedded tensors to numpy ndarray format.
+3. Calculate metrics following **barcode_example.py**
