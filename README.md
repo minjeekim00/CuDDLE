@@ -6,7 +6,7 @@ This is a repository for the paper "Barcode Method for Generative Model Evaluati
 - (Mutual) Fidelity : How well the generative model generates fake images.
 - (Mutual) Diversity : How diverse the generated images are.
 
-However, these two are relative values, not absolute values. Thereforre, we suggest users to calculate **Relative Fidelity** and **Relative Diversity**.
+However, these two are relative values, not absolute values. Therefore, we suggest users to calculate **Relative Fidelity** and **Relative Diversity**.
 
 - Relative Fidelity : (Fidelity between real and generated images) / (Fidelity between real and real images)
 - Relative Diversity : (Diveristy between real and generated images) / (Diversity between real and real images)
