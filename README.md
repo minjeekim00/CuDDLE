@@ -35,9 +35,9 @@ print("Relative Fidelity : {:.3f} | Relative Diversity : {:.3f}".format(rf_f/rr_
 
 **barcode_example.py** imports **barcode.py**. Therefore, **barcode.py** should be contemplated as well.
 
-If mutual fidelity is close to 1, quality of the generated images as good as the original images.
+If relative fidelity is close to 1, quality of the generated images as good as the original images.
 
-If mutual diversity is close to 1, the generative model generates images as diverse as the original images.
+If relative diversity is close to 1, the generative model generates images as diverse as the original images.
 
 # Environment
 
