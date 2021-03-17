@@ -45,7 +45,6 @@ class Barcode():
 
     def compute_distance(self, multiprocessing):
         import time
-        print("Calculating distances for every combination ...")
         if self.explain<1:
             ur, sr, vhr = self.svd(self.real_latent)
             uf, sf, vhf = self.svd(self.fake_latent)
@@ -140,7 +139,9 @@ class Barcode():
         plt.close('all')
         
     def get_barcode(self, multiprocessing=True):
-        self.compute_distance(multiprocessing)
+        if self.dists is None:
+            print("Distance not found. Computing...")
+            self.compute_distance(multiprocessing)
         diversity = self.get_diversity()
         fidelity = self.get_fidelity()
         return fidelity, diversity
