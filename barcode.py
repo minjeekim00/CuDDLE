@@ -1,4 +1,7 @@
 import numpy as np
+import multiprocessing
+import sklearn.metrics
+import math
 
 class Barcode():
     def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4):
@@ -37,7 +40,7 @@ class Barcode():
         if data_y is None:
             data_y = data_x
         dists = sklearn.metrics.pairwise_distances(
-            data_x, data_y, metric=self.dist_metric, n_jobs=8)
+            data_x, data_y, metric=self.dist_metric)
         return dists
 
     def compute_distance(self, multiprocessing):
@@ -100,7 +103,7 @@ class Barcode():
     
     def get_diversity(self):
         dists = self.get_distance()
-        diversity = dists.mean()
+        diversity = dists.std()
         return diversity
     
     def get_fidelity(self):
