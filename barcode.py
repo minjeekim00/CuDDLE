@@ -188,7 +188,7 @@ class Barcode():
         rr_diversity = self.get_diversity(realreal)
         ff_diversity = self.get_diversity(fakefake)
 
-        print(f"Real vs Fake Fidelity : {rf_fidelity:.3f}  | Real vs Real Fidelity : {rr_fidelity:.3f}  |  Fake vs Fake Fidelity : {ff_fidelity:.3f}")
+        print(f"Real vs Fake Fidelity : {rf_fidelity:.3f}  | Real vs Real Fidelity : {rr_fidelity:.3f}  | Fake vs Fake Fidelity : {ff_fidelity:.3f}")
         print(f"Real vs Fake Diversity: {rf_diversity:.3f} | Real vs Real Diversity: {rr_diversity:.3f} | Fake vs Fake Diversity: {ff_diversity:.3f}")
 
         return {"mutual_fidelity": rf_fidelity, "relative_fidelity": rf_fidelity/rr_fidelity,\
