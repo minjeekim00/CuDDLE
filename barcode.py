@@ -1,7 +1,12 @@
 import numpy as np
-import multiprocessing
-import sklearn.metrics
+import tqdm
+import os
+import matplotlib.pyplot as plt
 import math
+from sklearn.metrics import pairwise_distances
+import time
+import multiprocessing
+from multiprocessing import Pool
 
 class Barcode():
     def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4):
@@ -19,9 +24,30 @@ class Barcode():
         self.bars = None
         assert self.outlier_position in ['in', 'out', 'both', None]
         assert [len(self.real_latent.shape), len(self.fake_latent.shape)] == [2,2], print("Latent dimension should be 2: (number of latent vectors, dimension of latent vectors)")
-        
+        assert isinstance(self.distance, int)
+
         if self.distance == 2:
             self.dist_metric = 'l2'
+            self.dist_fx = self.L2
+        else:
+            self.dist_fx = self.Lp
+    
+    def L2(self, x,y):
+        return np.sqrt(np.sum((x-y)**2))
+
+    def Lp(self, x,y):
+        return np.linalg.norm(x-y, ord=self.distance)
+        
+    def compare_dicts(self, real, fake):
+        if len(real) != len(fake):
+            return 0
+        else:
+            for i in range(len(real)):
+                if (real[i] == fake[i]).all():
+                    pass
+                else:
+                    return 0
+            return 1
 
     def svd(self, x):
         _, num = x.shape
@@ -34,40 +60,50 @@ class Barcode():
         smat[:s.shape[0], :s.shape[0]] = np.diag(s)
         return u, smat, vh[:,:num]
 
-    def compute_pairwise_distance(self, data_x, data_y=None):
-        import sklearn.metrics
-        
-        if data_y is None:
-            data_y = data_x
-        dists = sklearn.metrics.pairwise_distances(
-            data_x, data_y, metric=self.dist_metric)
-        return dists
+    def compute_pairwise_distance(self, data_x, data_y):
+        dists = []
 
-    def compute_distance(self, multiprocessing):
-        import time
+        flag = self.compare_dicts(data_x, data_y)
+        
+        if flag:
+            for i in tqdm.tqdm(range(len(data_x)), position=0):
+                for j in range(len(data_y)):
+                    if i != j:
+                        dists.append(self.dist_fx(data_x[i], data_y[j]))
+        else:
+            if self.distance == 2:
+                dists = pairwise_distances(data_x, data_y, metric=self.dist_metric)
+            else:
+                for i in tqdm.tqdm(range(len(data_x)), position=0):
+                    for j in range(len(data_y)):
+                        dists.append(self.dist_fx(data_x[i], data_y[j]))
+        return np.array(dists).reshape((-1))
+
+    def compute_distance(self, multi, real, fake):
+        print("Calculating distances for every combination ...")
         if self.explain<1:
-            ur, sr, vhr = self.svd(self.real_latent)
-            uf, sf, vhf = self.svd(self.fake_latent)
+            ur, sr, vhr = self.svd(real)
+            uf, sf, vhf = self.svd(fake)
             
             reduction_r = np.dot(np.dot(ur, sr), vhr)
             reduction_f = np.dot(np.dot(uf, sf), vhf)
         else:
-            reduction_r = self.real_latent
-            reduction_f = self.fake_latent
+            reduction_r = real
+            reduction_f = fake
         
         rnum, _ = reduction_r.shape
         fnum, _ = reduction_f.shape
         
         dists = self.compute_pairwise_distance(reduction_r, reduction_f)
-        dists = np.reshape(dists, (-1))
+        
         
         start = time.time()
-        if multiprocessing:
+        if multi:
             dists = self.parallel_sort(dists)
         else:
             dists = self.sort(dists)
         print(f"Sorting distance took {(time.time()-start)/60} mins.....")
-        print("Calculating diversity for {} combinations ...".format(len(dists)))
+        print(f"Calculating diversity for {len(dists)} combinations ...")
         
         if self.outlier_position=='in':
             dists = dists[int(len(dists)*self.outlier_prob):]
@@ -76,13 +112,13 @@ class Barcode():
         elif self.outlier_position=='both':
             dists = dists[int(len(dists)*self.outlier_prob):int(len(dists)*(1-self.outlier_prob))]
         
-        self.dists = dists
+        return dists
      
     def sort(self, dists):
-        return np.array(sorted(dists))
+        dists = np.array(sorted(dists))
+        return dists
     
     def parallel_sort(self, dists):
-        from multiprocessing import Pool
         processes = multiprocessing.cpu_count()
         pool = Pool(processes=processes)
         size = int(math.ceil(float(len(dists)) / processes))
@@ -91,22 +127,17 @@ class Barcode():
         pool.close()
         pool.join()
         return np.hstack(dists)
-        
-    def get_distance(self):
-        return self.dists
     
-    def get_distance_norm(self):
-        dists = self.dists
+    def get_distance_norm(self, dists):
         dists = dists / (dists.max()+1e-4)
         return dists
     
-    def get_diversity(self):
-        dists = self.get_distance()
-        diversity = dists.std()
+    def get_diversity(self, dists):
+        diversity = dists.mean() # ?????????????????????????????????????????????????????????????????????????????????????ㅠㅠㅠㅠㅠㅠㅠㅠㅠ
         return diversity
     
-    def get_fidelity(self):
-        dists = self.get_distance_norm()
+    def get_fidelity(self, dists):
+        dists = self.get_distance_norm(dists)
         interval = 1 / self.steps
         bars = self.get_bars(dists)
         fidelity = np.mean(bars) # the area of cdf-like curve equals the mean
@@ -125,7 +156,6 @@ class Barcode():
         return bars
 
     def plot_bars(self, title='Barcode', filename='./barcode.png', format=None):
-        import matplotlib.pyplot as plt
         assert self.bars is not None
         
         print("Plotting fidelity for {} samples ...".format(len(self.bars)))
@@ -138,10 +168,27 @@ class Barcode():
         plt.show()
         plt.close('all')
         
-    def get_barcode(self, multiprocessing=True):
-        if self.dists is None:
-            print("Distance not found. Computing...")
-            self.compute_distance(multiprocessing)
-        diversity = self.get_diversity()
-        fidelity = self.get_fidelity()
-        return fidelity, diversity
+    def get_barcode(self, multi=True):
+        print("Computing distances between Real and Fake")
+        realfake = self.compute_distance(multi, self.real_latent, self.fake_latent)
+        print("Computing distances between Real and Real")
+        realreal = self.compute_distance(multi, self.real_latent, self.real_latent)
+        print("Computing distances between Fake and Fake")
+        fakefake = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+
+        self.realfake = realfake
+        self.realreal = realreal
+        self.fakefake = fakefake
+
+        rf_fidelity = self.get_fidelity(realfake)
+        rr_fidelity = self.get_fidelity(realreal)
+        ff_fidelity = self.get_fidelity(fakefake)
+
+        rf_diversity = self.get_diversity(realfake)
+        rr_diversity = self.get_diversity(realreal)
+        ff_diversity = self.get_diversity(fakefake)
+
+        print("Unnormalized distance case")
+
+        print(f"Real vs Fake Fidelity : {rf_fidelity:.3f}  | Real vs Real Fidelity : {rr_fidelity:.3f}  |  Fake vs Fake Fidelity : {ff_fidelity:.3f}")
+        print(f"Real vs Fake Diversity: {rf_diversity:.3f} | Real vs Real Diversity: {rr_diversity:.3f} | Fake vs Fake Diversity: {ff_diversity:.3f}")
