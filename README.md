@@ -23,16 +23,13 @@ Take a look in
 **barcode_example.py** is composed as:
 
 ```
-barcode_realfake = Barcode(real, fake)
-barcode_realreal = Barcode(real, real)
-barcode_fakefake = Barcode(fake, fake)
+from barcode import Barcode
 
-rf_f, rf_d = barcode_realfake.get_barcode()
-rr_f, rr_d = barcode_realreal.get_barcode()
-ff_f, ff_d = barcode_fakefake.get_barcode()
+superior = np.load('./brain_superior_embs.npz')['distance'].squeeze()
+inferior = np.load('./brain_inferior_embs.npz')['distance'].squeeze()
 
-print("Mutual Fidelity   : {:.3f} | Mutual Diversity   : {:.3f}".format(rf_f, rf_d))
-print("Relative Fidelity : {:.3f} | Relative Diversity : {:.3f}".format(rf_f/rr_f, rf_d/(np.sqrt(rr_d) * np.sqrt(ff_d))))
+barcode = Barcode(superior, inferior)
+barcode_dict = barcode.get_barcode()
 ```
 
 **barcode_example.py** imports **barcode.py**. Therefore, **barcode.py** should be contemplated as well.
