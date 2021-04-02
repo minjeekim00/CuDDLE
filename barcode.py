@@ -21,7 +21,6 @@ class Barcode():
      
         self.dist_metric = None
         self.dists = {'rr':None, 'rf':None, 'ff':None}
-        self.bars = None
         assert self.outlier_position in ['in', 'out', 'both', None]
         assert [len(self.real_latent.shape), len(self.fake_latent.shape)] == [2,2], print("Latent dimension should be 2: (number of latent vectors, dimension of latent vectors)")
         assert isinstance(self.distance, int)
@@ -152,15 +151,13 @@ class Barcode():
         bars = np.array(bars)
         if np.max(bars)!=0:
             bars = bars / bars.max()
-        self.bars = bars
         return bars
 
-    def plot_bars(self, title='Barcode', filename='./barcode.png', format=None):
-        assert self.bars is not None
+    def plot_bars(self, bars, title='Barcode', filename='./barcode.png', format=None):
         
-        print("Plotting fidelity for {} samples ...".format(len(self.bars)))
+        print("Plotting fidelity for {} samples ...".format(len(bars)))
         for i in range(self.steps):
-            x=np.arange(0,self.bars[i],self.plot_step)
+            x=np.arange(0,bars[i],self.plot_step)
             plt.plot(x, [i/self.steps]*len(x), 'b-')
         plt.ylim(0,1.1)
         plt.title(title)
