@@ -20,7 +20,7 @@ class Barcode():
         self.distance = distance
      
         self.dist_metric = None
-        self.dists = None
+        self.dists = {'rr':None, 'rf':None, 'ff':None}
         self.bars = None
         assert self.outlier_position in ['in', 'out', 'both', None]
         assert [len(self.real_latent.shape), len(self.fake_latent.shape)] == [2,2], print("Latent dimension should be 2: (number of latent vectors, dimension of latent vectors)")
@@ -96,7 +96,6 @@ class Barcode():
         
         dists = self.compute_pairwise_distance(reduction_r, reduction_f)
         
-        
         start = time.time()
         if multi:
             dists = self.parallel_sort(dists)
@@ -170,25 +169,25 @@ class Barcode():
         plt.close('all')
         
     def get_barcode(self, multi=True):
-        print("Computing distances between Real and Fake")
-        realfake = self.compute_distance(multi, self.real_latent, self.fake_latent)
-        print("Computing distances between Real and Real")
-        realreal = self.compute_distance(multi, self.real_latent, self.real_latent)
-        print("Computing distances between Fake and Fake")
-        fakefake = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+        
+        if self.dists['rr'] is None:
+            print("Distance not found. Computing distances between Real and Real")
+            self.dists['rr'] = self.compute_distance(multi, self.real_latent, self.real_latent)
+        if self.dists['rf'] is None:
+            print("Distance not found. Computing distances between Real and Fake")    
+            realfake = self.compute_distance(multi, self.real_latent, self.fake_latent)
+        if self.dists['ff'] is None:
+            print("Distance not found. Computing distances between Fake and Fake")    
+            fakefake = self.compute_distance(multi, self.fake_latent, self.fake_latent)
         
 
-        self.realfake = realfake
-        self.realreal = realreal
-        self.fakefake = fakefake
+        rf_fidelity = self.get_fidelity(self.dists['rf'])
+        rr_fidelity = self.get_fidelity(self.dists['rr'])
+        ff_fidelity = self.get_fidelity(self.dists['ff'])
 
-        rf_fidelity = self.get_fidelity(realfake)
-        rr_fidelity = self.get_fidelity(realreal)
-        ff_fidelity = self.get_fidelity(fakefake)
-
-        rf_diversity = self.get_diversity(realfake)
-        rr_diversity = self.get_diversity(realreal)
-        ff_diversity = self.get_diversity(fakefake)
+        rf_diversity = self.get_diversity(self.dists['rf'])
+        rr_diversity = self.get_diversity(self.dists['rr'])
+        ff_diversity = self.get_diversity(self.dists['ff'])
 
         print(f"Real vs Fake Fidelity : {rf_fidelity:.3f} | Real vs Real Fidelity : {rr_fidelity:.3f} | Fake vs Fake Fidelity : {ff_fidelity:.3f}")
         print(f"Real vs Fake Diversity: {rf_diversity:.3f} | Real vs Real Diversity: {rr_diversity:.3f} | Fake vs Fake Diversity: {ff_diversity:.3f}")
