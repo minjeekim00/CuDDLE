@@ -39,6 +39,19 @@ If relative fidelity is close to 1, quality of the generated images as good as t
 
 If relative diversity is close to 1, the generative model generates images as diverse as the original images.
 
+
+To plot barcode image, execute:
+
+```
+from barcode import Barcode
+
+superior = np.load('./brain_superior_embs.npz')['distance'].squeeze()
+inferior = np.load('./brain_inferior_embs.npz')['distance'].squeeze()
+
+barcode = Barcode(superior, inferior)
+barcode.plot_bars()
+```
+
 # Environment
 
 This code is written in tensorflow 1.15 version. However, the **barcode.py** code is executed in numpy ndarray format, therefore it does not depend on framework environment such as pytorch or tensorflow. All you have to do is:
