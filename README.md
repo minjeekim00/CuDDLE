@@ -12,7 +12,7 @@ However, these two are relative values, not absolute values. Therefore, we sugge
 - Relative Diversity : (Diveristy between real and generated images) / sqrt(Diveristy between real and real images) * sqrt(Diveristy between generated and generated images)
 
 
-These two can be considered as normalized fidelity and normalized diversity compared to real data.
+These two can be considered as normalized fidelity and normalized diversity.
 
 # Usage
 
