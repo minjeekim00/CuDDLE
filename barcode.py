@@ -174,17 +174,20 @@ class Barcode():
         mode : One of ['rf', 'rr', 'ff']. 'r' denotes real embedding vectors, 'f' denotes fake embedding vectors.
         multl: Multiprocessing option.
         '''
-        if (self.dists['rf'] is None) and (mode=='rf'):
-            print("Distance not found. Computing distances between Real and Fake")    
-            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+        if mode=='rf':
+            if self.dists['rf'] is None:
+                print("Distance not found. Computing distances between Real and Fake")    
+                self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
             bars = self.get_bars(self.dists['rf'])
-        if (self.dists['rf'] is None) and (mode=='rf'):
-            print("Distance not found. Computing distances between Real and Fake")    
-            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.real_latent)
+        if mode=='rr':
+            if self.dists['rr'] is None:
+                print("Distance not found. Computing distances between Real and Real")    
+                self.dists['rr'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
             bars = self.get_bars(self.dists['rr'])
-        if (self.dists['ff'] is None) and (mode=='rf'):
-            print("Distance not found. Computing distances between Real and Fake")    
-            self.dists['ff'] = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+        if mode=='ff':
+            if self.dists['ff'] is None:
+                print("Distance not found. Computing distances between Fake and Fake")    
+                self.dists['ff'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
             bars = self.get_bars(self.dists['ff'])
         
         print("Plotting fidelity for {} samples ...".format(len(bars)))
