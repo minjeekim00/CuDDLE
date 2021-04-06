@@ -9,6 +9,20 @@ import multiprocessing
 from multiprocessing import Pool
 
 class Barcode():
+    '''
+    Barcode class
+    
+    real_latent      : Embedding vectors from real images.
+    fake_latent      : Embedding vectors from fake images.
+    distance         : Distance option. 2 implies L2 distance.
+    outlier_prob     : Outlier probability. This is used for SVD. If outlier_prob=0, every embedding vectors are used. 
+                       We recommend 0.
+    outlier_position : How to exclude outliers. 'in' implies remove shortest distances, 'out' implies largest distances, 
+                      'both' implies both. We recommend None.
+    explainability   : Ratio for SVD. 1 implies we will use all combinations.
+    steps, plot_step : Plotting options. 
+    '''
+    
     def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4):
         self.outlier_prob = outlier_prob
         self.explain = explainability
@@ -143,7 +157,7 @@ class Barcode():
         return fidelity
     
     def get_bars(self, dists):
-        interval = 1 / self.steps
+        interval = dists.max() / self.steps
         bars = []
         for i in range(self.steps):
             b = np.sum(dists<interval*i)
@@ -153,7 +167,25 @@ class Barcode():
             bars = bars / bars.max()
         return bars
 
-    def plot_bars(self, bars, title='Barcode', filename='./barcode.png', format=None):
+    def plot_bars(self, mode='rf', title='Barcode', filename='./barcode', img_format='png', multi=True):
+        '''
+        Plotting barcode as image.
+        
+        mode : One of ['rf', 'rr', 'ff']. 'r' denotes real embedding vectors, 'f' denotes fake embedding vectors.
+        multl: Multiprocessing option.
+        '''
+        if (self.dists['rf'] is None) and (mode=='rf'):
+            print("Distance not found. Computing distances between Real and Fake")    
+            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+            bars = self.get_bars(self.dists['rf'])
+        if (self.dists['rf'] is None) and (mode=='rf'):
+            print("Distance not found. Computing distances between Real and Fake")    
+            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.real_latent)
+            bars = self.get_bars(self.dists['rr'])
+        if (self.dists['ff'] is None) and (mode=='rf'):
+            print("Distance not found. Computing distances between Real and Fake")    
+            self.dists['ff'] = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+            bars = self.get_bars(self.dists['ff'])
         
         print("Plotting fidelity for {} samples ...".format(len(bars)))
         for i in range(self.steps):
@@ -161,21 +193,24 @@ class Barcode():
             plt.plot(x, [i/self.steps]*len(x), 'b-')
         plt.ylim(0,1.1)
         plt.title(title)
-        plt.savefig(filename, format=format)
+        plt.savefig(filename+'.'+img_format, format=img_format)
         plt.show()
         plt.close('all')
         
     def get_barcode(self, multi=True):
+        '''
+        Calculate fidelities, diversities.
+        '''
         
         if self.dists['rr'] is None:
             print("Distance not found. Computing distances between Real and Real")
             self.dists['rr'] = self.compute_distance(multi, self.real_latent, self.real_latent)
         if self.dists['rf'] is None:
             print("Distance not found. Computing distances between Real and Fake")    
-            realfake = self.compute_distance(multi, self.real_latent, self.fake_latent)
+            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
         if self.dists['ff'] is None:
             print("Distance not found. Computing distances between Fake and Fake")    
-            fakefake = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+            self.dists['ff'] = self.compute_distance(multi, self.fake_latent, self.fake_latent)
         
 
         rf_fidelity = self.get_fidelity(self.dists['rf'])
