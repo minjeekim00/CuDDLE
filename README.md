@@ -49,9 +49,9 @@ superior = np.load('./brain_superior_embs.npz')['distance'].squeeze()
 inferior = np.load('./brain_inferior_embs.npz')['distance'].squeeze()
 
 barcode = Barcode(superior, inferior)
-barcode.plot_bars(mode='rf', title='Barcode plot between real and fake images')
-barcode.plot_bars(mode='rr', title='Barcode plot between real and real images')
-barcode.plot_bars(mode='ff', title='Barcode plot between fake and fake images')
+barcode.plot_bars(mode='rf', title='Barcode plot between real and fake images', filename='realfake')
+barcode.plot_bars(mode='rr', title='Barcode plot between real and real images', filename='realreal')
+barcode.plot_bars(mode='ff', title='Barcode plot between fake and fake images', filename='fakefake')
 
 ```
 
