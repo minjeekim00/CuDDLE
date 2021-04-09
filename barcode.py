@@ -93,7 +93,7 @@ class Barcode():
                         dists.append(self.dist_fx(data_x[i], data_y[j]))
         return np.array(dists).reshape((-1))
 
-    def compute_distance(self, real, fake, multi=self.multi):
+    def compute_distance(self, real, fake, multi):
         print("Calculating distances for every combination ...")
         if self.explain<1:
             ur, sr, vhr = self.svd(real)
@@ -168,7 +168,7 @@ class Barcode():
             bars = bars / bars.max()
         return bars
 
-    def plot_bars(self, mode='rf', title='Barcode', filename='./barcode', img_format='png', multi=self.multi):
+    def plot_bars(self, multi, mode='rf', title='Barcode', filename='./barcode', img_format='png'):
         '''
         Plotting barcode as image.
         
@@ -201,7 +201,7 @@ class Barcode():
         plt.show()
         plt.close('all')
         
-    def get_barcode(self, multi=self.multi):
+    def get_barcode(self, multi):
         '''
         Calculate fidelities, diversities.
         '''
