@@ -23,7 +23,7 @@ class Barcode():
     steps, plot_step : Plotting options. 
     '''
     
-    def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4):
+    def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4, multi=True):
         self.outlier_prob = outlier_prob
         self.explain = explainability
         self.real_latent = real_latent
@@ -32,6 +32,7 @@ class Barcode():
         self.plot_step = plot_step
         self.outlier_position = outlier_position
         self.distance = distance
+        self.multi = multi
      
         self.dist_metric = None
         self.dists = {'rr':None, 'rf':None, 'ff':None}
@@ -92,7 +93,7 @@ class Barcode():
                         dists.append(self.dist_fx(data_x[i], data_y[j]))
         return np.array(dists).reshape((-1))
 
-    def compute_distance(self, multi, real, fake):
+    def compute_distance(self, real, fake, multi=self.multi):
         print("Calculating distances for every combination ...")
         if self.explain<1:
             ur, sr, vhr = self.svd(real)
@@ -167,7 +168,7 @@ class Barcode():
             bars = bars / bars.max()
         return bars
 
-    def plot_bars(self, mode='rf', title='Barcode', filename='./barcode', img_format='png', multi=True):
+    def plot_bars(self, mode='rf', title='Barcode', filename='./barcode', img_format='png', multi=self.multi):
         '''
         Plotting barcode as image.
         
@@ -177,17 +178,17 @@ class Barcode():
         if mode=='rf':
             if self.dists['rf'] is None:
                 print("Distance not found. Computing distances between Real and Fake")    
-                self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+                self.dists['rf'] = self.compute_distance(self.real_latent, self.fake_latent, self.multi)
             bars = self.get_bars(self.dists['rf'])
         if mode=='rr':
             if self.dists['rr'] is None:
                 print("Distance not found. Computing distances between Real and Real")    
-                self.dists['rr'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+                self.dists['rr'] = self.compute_distance(self.real_latent, self.fake_latent, self.multi)
             bars = self.get_bars(self.dists['rr'])
         if mode=='ff':
             if self.dists['ff'] is None:
                 print("Distance not found. Computing distances between Fake and Fake")    
-                self.dists['ff'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+                self.dists['ff'] = self.compute_distance(self.real_latent, self.fake_latent, self.multi)
             bars = self.get_bars(self.dists['ff'])
         
         print("Plotting fidelity for {} samples ...".format(len(bars)))
@@ -200,20 +201,20 @@ class Barcode():
         plt.show()
         plt.close('all')
         
-    def get_barcode(self, multi=True):
+    def get_barcode(self, multi=self.multi):
         '''
         Calculate fidelities, diversities.
         '''
         
         if self.dists['rr'] is None:
             print("Distance not found. Computing distances between Real and Real")
-            self.dists['rr'] = self.compute_distance(multi, self.real_latent, self.real_latent)
+            self.dists['rr'] = self.compute_distance(self.real_latent, self.real_latent, self.multi)
         if self.dists['rf'] is None:
             print("Distance not found. Computing distances between Real and Fake")    
-            self.dists['rf'] = self.compute_distance(multi, self.real_latent, self.fake_latent)
+            self.dists['rf'] = self.compute_distance(self.real_latent, self.fake_latent, self.multi)
         if self.dists['ff'] is None:
             print("Distance not found. Computing distances between Fake and Fake")    
-            self.dists['ff'] = self.compute_distance(multi, self.fake_latent, self.fake_latent)
+            self.dists['ff'] = self.compute_distance(self.fake_latent, self.fake_latent, self.multi)
         
 
         rf_fidelity = self.get_fidelity(self.dists['rf'])
