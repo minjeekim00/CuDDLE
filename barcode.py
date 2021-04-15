@@ -23,7 +23,16 @@ class Barcode():
     steps, plot_step : Plotting options. 
     '''
     
-    def __init__(self, real_latent, fake_latent, distance=2, outlier_prob=0, outlier_position=None, explainability=1, steps=100, plot_step=1e-4, multi=True):
+    def __init__(self, 
+                 real_latent, 
+                 fake_latent, 
+                 distance=2, 
+                 outlier_prob=0, 
+                 outlier_position=None, 
+                 explainability=1, 
+                 steps=100, 
+                 plot_step=1e-4, 
+                 multi=True):
         self.outlier_prob = outlier_prob
         self.explain = explainability
         self.real_latent = real_latent
@@ -37,7 +46,8 @@ class Barcode():
         self.dist_metric = None
         self.dists = {'rr':None, 'rf':None, 'ff':None}
         assert self.outlier_position in ['in', 'out', 'both', None]
-        assert [len(self.real_latent.shape), len(self.fake_latent.shape)] == [2,2], print("Latent dimension should be 2: (number of latent vectors, dimension of latent vectors)")
+        assert [len(self.real_latent.shape), len(self.fake_latent.shape)] == [2,2], \
+            print("Latent dimension should be 2: (number of latent vectors, dimension of latent vectors)")
         assert isinstance(self.distance, int)
 
         if self.distance == 2:
