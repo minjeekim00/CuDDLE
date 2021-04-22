@@ -211,7 +211,7 @@ class Barcode():
         plt.show()
         plt.close('all')
         
-    def get_barcode(self, multi):
+    def get_barcode(self):
         '''
         Calculate fidelities, diversities.
         '''
