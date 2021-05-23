@@ -1,7 +1,7 @@
 # Official Code Implementation for Barcode
 This is a repository for the paper "Barcode Method for Generative Model Evaluation driven by Topological Data Analysis".
 
-# Basic Concepts
+## Basic Concepts
 
 - (Mutual) Fidelity : How well the generative model generates fake images.
 - (Mutual) Diversity : How diverse the generated images are.
@@ -14,7 +14,7 @@ However, these two are relative values, not absolute values. Therefore, we sugge
 
 These two can be considered as normalized fidelity and normalized diversity.
 
-# Usage
+## Usage
 
 Take a look in
 
@@ -55,7 +55,7 @@ barcode.plot_bars(mode='ff', title='Barcode plot between fake and fake images', 
 
 ```
 
-# Environment
+## Environment
 
 This code is written in tensorflow 1.15 version. However, the **barcode.py** code is executed in numpy ndarray format, therefore it does not depend on framework environment such as pytorch or tensorflow. All you have to do is:
 
