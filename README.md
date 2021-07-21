@@ -62,3 +62,14 @@ This code is written in tensorflow 1.15 version. However, the **barcode.py** cod
 1. Get embedding vectors from real and generated images using pretrained CNN network, such as [Inception v3](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.pdf).
 2. Transform embedded tensors to numpy ndarray format.
 3. Calculate metrics following **barcode_example.py**
+
+## Cite as
+
+```
+@article{jang2021barcode,
+  title={Barcode Method for Generative Model Evaluation driven by Topological Data Analysis},
+  author={Jang, Ryoungwoo and Kim, Minjee and Eun, Da-in and Cho, Kyungjin and Seo, Jiyeon and Kim, Namkug},
+  journal={arXiv preprint arXiv:2106.02207},
+  year={2021}
+}
+```
