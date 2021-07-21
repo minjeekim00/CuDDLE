@@ -9,7 +9,7 @@ This is a repository for the paper [Barcode Method for Generative Model Evaluati
 However, these two are relative values, not absolute values. Therefore, we suggest users to calculate **Relative Fidelity** and **Relative Diversity**.
 
 - Relative Fidelity : (Fidelity between real and generated images) / (Fidelity between real and real images)
-- Relative Diversity : (Diveristy between real and generated images) / sqrt(Diveristy between real and real images) * sqrt(Diveristy between generated and generated images)
+- Relative Diversity : $$frac{Diveristy between real and generated images}{\sqrt{Diveristy between real and real images}\sqrtDiveristy between generated and generated images}}$$
 
 
 These two can be considered as normalized fidelity and normalized diversity.
