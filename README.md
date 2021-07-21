@@ -1,5 +1,5 @@
 # Official Code Implementation for Barcode
-This is a repository for the paper ![Barcode Method for Generative Model Evaluation driven by Topological Data Analysis](https://arxiv.org/abs/2106.02207).
+This is a repository for the paper [Barcode Method for Generative Model Evaluation driven by Topological Data Analysis](https://arxiv.org/abs/2106.02207).
 
 ## Basic Concepts
 
