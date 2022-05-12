@@ -1,6 +1,8 @@
 # Official Code Implementation for Barcode
 This is a repository for the paper [Barcode Method for Generative Model Evaluation driven by Topological Data Analysis](https://arxiv.org/abs/2106.02207).
 
+[한국어 README](https://github.com/minjeekim00/Barcode/blob/main/README_KOR.md)
+
 ## Basic Concepts
 
 - (Mutual) Fidelity : How well the generative model generates fake images.
