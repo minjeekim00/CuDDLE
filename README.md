@@ -1,4 +1,4 @@
-# Official Code Implementation for Barcode
+# Official Code Implementation for CuDDLE
 This is a repository for the paper [Barcode Method for Generative Model Evaluation driven by Topological Data Analysis](https://arxiv.org/abs/2106.02207).
 
 [한국어 README](https://github.com/minjeekim00/Barcode/blob/main/README_KOR.md)
